@@ -1,5 +1,10 @@
 pipeline {
     agent any
+
+    environment {
+    npm_config_cache = '/tmp/.npm-cache'
+    CI = 'true'
+}
     
     triggers {
         githubPush()
@@ -16,7 +21,7 @@ pipeline {
             steps {
                 sh '''
                     export npm_config_cache=/tmp/.npm-cache
-                    npm ci --legacy-peer-deps
+                    npm install --legacy-peer-deps
                     npm run build
                 '''
             }
