@@ -14,12 +14,11 @@ pipeline {
             }
             steps {
                 sh '''
-                ls -la
                 npm --version
                 node --version
-                npm ci --cache /tmp/.mpm-cache
+                npm cache verify
+                npm ci --verbose
                 npm run build
-                ls -la
                 '''
             }
         }
