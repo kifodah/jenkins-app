@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    triggers {
+        githubPush()
+    }
+
     stages {
         stage('Build')  {
             agent {
@@ -41,13 +45,9 @@ pipeline {
                 }
             }
             steps {
-                withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
+                withCredentials([string(credentialsId: 'Jenkinsapp', variable: 'RENDER_API_KEY')]) {
                     sh '''
-                    SERVICE_ID=$(echo $RENDER_API_KEY | cut -d'_' -f1)
-                    curl -X POST https://api.render.com/v1/services/$SERVICE_ID/deploys \
-                    -H "Authorization: Bearer $RENDER_API_KEY" \
-                    -H "Content-Type: application/json" \
-                    -d '{"clearCache": true}'
+                    curl -X POST -d {} https://api.netlify.com/build_hooks/6a0c380cd01047b8764e9232
                     '''
                 }
             }
