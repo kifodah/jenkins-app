@@ -11,9 +11,8 @@ pipeline {
                 script {
                     docker.image('node:18').inside {
                         sh '''
-                            export npm_config_cache=/tmp/npm-cache
-                            mkdir -p $npm_config_cache
-                            npm install
+                            npm cache clean --force
+                            npm ci --legacy-peer-deps
                             npm run build
                         '''
                     }
@@ -22,27 +21,19 @@ pipeline {
         }
         
         stage('Test') {
-            agent {
-                docker {
-                    image 'node:18'
-                    reuseNode true
-                }
-            }
             steps {
-                sh '''
-                    test -f build/index.html
-                    CI=true npm test
-                '''
+                script {
+                    docker.image('node:18').inside {
+                        sh '''
+                            test -f build/index.html
+                            CI=true npm test -- --watchAll=false
+                        '''
+                    }
+                }
             }
         }
         
         stage('Deploy to Render') {
-            agent {
-                docker {
-                    image 'node:18'
-                    reuseNode true
-                }
-            }
             steps {
                 withCredentials([string(credentialsId: 'Jenkinsapp', variable: 'RENDER_API_KEY')]) {
                     sh '''
