@@ -11,10 +11,8 @@ pipeline {
             }
             steps {
                 sh '''
-                ls -la
-                node --version
-                npm --version
-                npm ci --cache /tmp/.npm-cache
+                npm cache clean --force
+                npm install
                 npm run build
                 ls -la
                 '''
