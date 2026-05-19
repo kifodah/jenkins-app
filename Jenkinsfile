@@ -8,14 +8,16 @@ pipeline {
         stage('Build')  {
             agent {
                 docker {
-                    image 'node:18-slim'    // ← Changed from alpine
+                    image 'node:18-alpine'    // ← Changed from alpine
                     reuseNode true
                 }
             }
             steps {
                 sh '''
-                npm cache clean --force
-                npm install
+                ls -la
+                npm --version
+                node --version
+                npm ci --cache /tmp/.mpm-cache
                 npm run build
                 ls -la
                 '''
@@ -25,7 +27,7 @@ pipeline {
         stage('Test') {
             agent {
                 docker {
-                    image 'node:18-slim'    // ← Changed from alpine
+                    image 'node:18-alpine'    // ← Changed from alpine
                     reuseNode true
                 }
             }
