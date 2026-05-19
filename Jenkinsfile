@@ -4,29 +4,25 @@ pipeline {
         githubPush()
     }
 
-    stages {
-        stage('Build')  {
-            agent {
-                docker {
-                    image 'node:18-alpine'    // ← Changed from alpine
-                    reuseNode true
-                }
-            }
-            steps {
+    stage('Build') {
+    steps {
+        script {
+            docker.image('node:18').inside {
                 sh '''
-                npm --version
-                node --version
-                npm cache verify
-                npm ci --verbose
-                npm run build
+                    export npm_config_cache=/tmp/npm-cache
+                    mkdir -p $npm_config_cache
+                    npm install
+                    npm run build
                 '''
             }
         }
+    }
+}
         
         stage('Test') {
             agent {
                 docker {
-                    image 'node:18-alpine'    // ← Changed from alpine
+                    image 'node:18'    // ← Changed from alpine
                     reuseNode true
                 }
             }
