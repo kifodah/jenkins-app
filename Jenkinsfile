@@ -8,13 +8,12 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                script {
-                    docker.image('node:18').inside {
-                        sh '''
-                            npm cache clean --force
-                            npm ci --legacy-peer-deps
-                            npm run build
-                        '''
+                    sh '''
+                        npm config set cache /tmp/.npm-cache --global
+                        npm cache clean --force
+                        npm ci --legacy-peer-deps
+                        npm run build
+                       '''
                     }
                 }
             }
