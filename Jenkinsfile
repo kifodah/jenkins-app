@@ -15,8 +15,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    npm config set cache /tmp/.npm-cache
-                    npm cache clean --force
+                    export npm_config_cache=/tmp/.npm-cache
                     npm ci --legacy-peer-deps
                     npm run build
                 '''
