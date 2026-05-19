@@ -2,28 +2,69 @@ pipeline {
     agent any
 
     stages {
-        stage('w/o Docker') {
-            steps {
-                sh '''
-                   echo "without Docker"
-                   ls -la
-                   touch container no.txt
-                 '''
-            }
-        }
-        stage('w/ Docker') {
+        stage('Build')  {
             agent {
                 docker {
                     image 'node:18-alpine'
+                    reuseNode true
                 }
             }
             steps {
                 sh '''
-                  echo "with Docker"
-                  ls -la
-                  touch container yes.txt
+                ls -la
+                node --version
+                npm --version
+                npm ci --cache /tmp/.npm-cache
+                npm run build
+                ls -la
                 '''
             }
         }
+        stage('Test') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                test -f build/index.html
+                CI=true npm test
+                '''
+            }
+        }
+
+        stage('Deploy to Render') {
+            agent {
+                docker {
+                    image 'node:18'
+                    reuseNode true
+                }
+            }
+            steps {
+            withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
+                    sh '''
+                    SERVICE_ID=$(echo $RENDER_API_KEY | cut -d'_' -f1)
+                    curl -X POST https://api.render.com/v1/services/$SERVICE_ID/deploys \
+                    -H "Authorization: Bearer $RENDER_API_KEY" \
+                    -H "Content-Type: application/json" \
+                    -d '{"clearCache": true}' \
+                    '''
+                }
+            }
+        }
     }
+    post{
+        always {
+            junit 'test-results/junit.xml'
+        }
+        success {
+            echo 'Pipeline completed - app deployed to Render'
+        }
+        failure {
+            echo 'Pipeline failed - deployment to Render did not occur'
+        }
+    }
+
 }
