@@ -7,34 +7,40 @@ pipeline {
     
     stages {
         stage('Build') {
-            steps {
-                    sh '''
-                        npm config set cache /tmp/.npm-cache --global
-                        npm cache clean --force
-                        npm ci --legacy-peer-deps
-                        npm run build
-                       '''
-                    }
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
                 }
+            }
+            steps {
+                sh '''
+                    npm config set cache /tmp/.npm-cache --global
+                    npm cache clean --force
+                    npm ci --legacy-peer-deps
+                    npm run build
+                '''
             }
         }
         
         stage('Test') {
-            steps {
-                script {
-                    docker.image('node:18').inside {
-                        sh '''
-                            test -f build/index.html
-                            CI=true npm test -- --watchAll=false
-                        '''
-                    }
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    reuseNode true
                 }
+            }
+            steps {
+                sh '''
+                    test -f build/index.html
+                    CI=true npm test -- --watchAll=false
+                '''
             }
         }
         
-        stage('Deploy to Render') {
+        stage('Deploy to Netlify') {
             steps {
-                withCredentials([string(credentialsId: 'Jenkinsapp', variable: 'RENDER_API_KEY')]) {
+                withCredentials([string(credentialsId: 'Jenkinsapp', variable: 'Jenkinsapp')]) {
                     sh '''
                         curl -X POST -d {} https://api.netlify.com/build_hooks/6a0c380cd01047b8764e9232
                     '''
@@ -48,10 +54,10 @@ pipeline {
             junit testResults: '**/test-results.xml', allowEmptyResults: true
         }
         success {
-            echo 'Pipeline completed - app deployed to Render'
+            echo 'Pipeline completed - app deployed to Netlify'
         }
         failure {
-            echo 'Pipeline failed - deployment to Render did not occur'
+            echo 'Pipeline failed - deployment to Netlify did not occur'
         }
     }
 }
