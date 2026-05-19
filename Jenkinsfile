@@ -1,6 +1,5 @@
 pipeline {
     agent any
-
     stages {
         stage('Build')  {
             agent {
@@ -18,6 +17,7 @@ pipeline {
                 '''
             }
         }
+        
         stage('Test') {
             agent {
                 docker {
@@ -32,7 +32,7 @@ pipeline {
                 '''
             }
         }
-
+        
         stage('Deploy to Render') {
             agent {
                 docker {
@@ -41,21 +41,22 @@ pipeline {
                 }
             }
             steps {
-            withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
+                withCredentials([string(credentialsId: 'RENDER_API_KEY', variable: 'RENDER_API_KEY')]) {
                     sh '''
                     SERVICE_ID=$(echo $RENDER_API_KEY | cut -d'_' -f1)
                     curl -X POST https://api.render.com/v1/services/$SERVICE_ID/deploys \
                     -H "Authorization: Bearer $RENDER_API_KEY" \
                     -H "Content-Type: application/json" \
-                    -d '{"clearCache": true}' \
+                    -d '{"clearCache": true}'
                     '''
                 }
             }
         }
     }
-    post{
+    
+    post {
         always {
-            junit 'test-results/junit.xml'
+            junit testResults: '**/test-results.xml', allowEmptyResults: true
         }
         success {
             echo 'Pipeline completed - app deployed to Render'
@@ -64,5 +65,4 @@ pipeline {
             echo 'Pipeline failed - deployment to Render did not occur'
         }
     }
-
 }
